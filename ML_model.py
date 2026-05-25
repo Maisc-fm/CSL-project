@@ -1,22 +1,13 @@
 """
 =============================================================================
- LOGISTIC REGRESSION
-  Applied to Real Omalizumab Patient Data (39 patients, 5 genes)
-  Lopez-Rincon et al. (2021/2023)
+LOGISTIC REGRESSION
+Applied to Real Omalizumab Patient Data (39 patients, 5 genes)
+Lopez-Rincon et al. (2021/2023)
 =============================================================================
-
-SIMPLE EXPLANATION:
-  Linear Regression  → predicts a NUMBER   → wrong tool for our problem
-  Logistic Regression → predicts a GROUP   → correct tool for our problem
-
-  Our question is: "Will this patient RESPOND to omalizumab (yes/no)?"
-  That is a classification problem → Logistic Regression
-
-  This script shows:
-  1. How Linear Regression works (and why it fails here)
-  2. How Logistic Regression works (and why it succeeds here)
-  3. Both applied to your real 39-patient gene expression data
-  4. How each measures its "accuracy"
+Sections:
+  1. How Logistic Regression works
+  2. Application to real 39-patient gene expression data
+  3. How each measures its "accuracy"
 =============================================================================
 """
 
@@ -24,18 +15,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from sklearn.linear_model    import LinearRegression, LogisticRegression
+from sklearn.linear_model    import LogisticRegression
 from sklearn.preprocessing   import StandardScaler
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 from sklearn.metrics import (
-    r2_score, mean_squared_error,        # Linear regression metrics
     accuracy_score, f1_score,            # Logistic regression metrics
     roc_auc_score, confusion_matrix,
     classification_report, roc_curve
 )
 
 # =============================================================================
-# SECTION 1 — LOAD YOUR REAL PATIENT DATA
+# SECTION 1 — LOAD REAL PATIENT DATA
 #
 # 39 patients, each described by 5 gene expression values.
 # Labels: 1 = Responder to omalizumab, 0 = Non-Responder
@@ -45,8 +35,8 @@ print("=" * 60)
 print("  LOADING REAL PATIENT DATA")
 print("=" * 60)
 
-# replace the file path to your own .csv file destination!!
-data = pd.read_csv('C:\\Users\\maisa\\OneDrive\\Desktop\\CSL\\Project\\ML final\\data\\monte_carlo_800_patients.csv', header=0)
+# replace the file path to your own .csv file destination
+data = pd.read_csv('C:/Users/maisa/OneDrive/Desktop/CSL/Project/97717_102776_103541_105147_106387/data/Original Patients Dataset_39.csv', header=0)
 y = data['label'].values
 
 FIVE_GENES = ['CCDC113', 'SLC26A8', 'PPP1R3D', 'LOC100131780', 'CLEC4C']
@@ -151,7 +141,7 @@ for line in classification_report(
 
 
 # =============================================================================
-# SECTION 3 — SIDE-BY-SIDE COMPARISON OF BOTH MODELS
+# SECTION 3 — MODEL PERFORMANCE METRIC
 # =============================================================================
 
 print("\n" + "=" * 60)
@@ -173,10 +163,9 @@ print(f"""
 # SECTION 4 — VISUALIZATION
 #
 # 4-panel figure:
-#   Panel 1: Linear regression predictions — shows values going out of [0,1]
-#   Panel 2: Logistic sigmoid — shows how probabilities are "squished"
-#   Panel 3: Logistic predictions per patient — probability bar chart
-#   Panel 4: ROC curve — the gold-standard accuracy visualization
+#   Panel 1: Logistic sigmoid — shows how probabilities are squished
+#   Panel 2: Logistic predictions per patient — probability bar chart
+#   Panel 3: ROC curve — the gold-standard accuracy visualization
 # =============================================================================
 
 print("Generating visualization...")
@@ -236,9 +225,9 @@ ax2.set_ylim(-0.05, 1.05)
 ax2.legend(fontsize=7.5, loc='upper left', framealpha=0.9)
 ax2.spines[['top','right']].set_visible(False)
 ax2.tick_params(labelsize=8, colors='#666666')
-ax2.text(3.5, 0.72, '← Responder\n   zone',
+ax2.text(3.5, 0.72, ' Responder\n   zone',
          color=COLOR_RESP, fontsize=8.5, fontweight='500', alpha=0.8)
-ax2.text(-5.8, 0.22, 'Non-Responder\nzone →',
+ax2.text(-5.8, 0.22, 'Non-Responder\nzone ',
          color=COLOR_NONRESP, fontsize=8.5, fontweight='500', alpha=0.8)
 
 
@@ -362,11 +351,6 @@ fig.suptitle(
     fontsize=13, fontweight='600', color='#111111', y=1.01
 )
 
-out_path = 'C:\\Users\\maisa\\OneDrive\\Desktop\\CSL\\Project\\ML new test\\linear_vs_logistic.png'
-plt.savefig(out_path, dpi=150, bbox_inches='tight',
-            facecolor=fig.get_facecolor())
 
 print(f"\nSaved.")
-
-
 
