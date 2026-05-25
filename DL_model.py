@@ -1,15 +1,15 @@
 """
 =============================================================================
-  DEEP LEARNING — NEURAL NETWORK CLASSIFIER
-  Omalizumab Responder vs Non-Responder — 5-Gene Signature
-  Lopez-Rincon et al. (2021/2023)
+DEEP LEARNING — NEURAL NETWORK CLASSIFIER
+Omalizumab Responder vs Non-Responder
+Lopez-Rincon et al. (2021/2023)
 
-  Three network depths compared:
+Three network depths compared:
     Model A — 2-layer  network  (shallow)
     Model B — 5-layer  network  (medium)
     Model C — 7-layer  network  (deep)
 
-  Same premise as Linear vs Logistic script:
+Sections:
     - Load real 39-patient data
     - Use the 5-gene signature
     - Stratified 5-Fold Cross-Validation
@@ -17,7 +17,6 @@
     - Visualise training curves + decision boundaries + ROC curves
 =============================================================================
 
-WHAT IS A NEURAL NETWORK?
   A neural network is a chain of mathematical layers.
   Each layer transforms the data, passing it to the next.
   The DEPTH (number of layers) controls how complex the
@@ -37,6 +36,8 @@ EACH LAYER DOES:
   output = activation_function( weights × input + bias )
   The activation function (ReLU or Sigmoid) adds non-linearity
   so the network can learn curved, complex decision boundaries.
+  
+=============================================================================
 """
 
 import numpy as np
@@ -75,25 +76,15 @@ print("=" * 65)
 print("  SECTION 1 — LOADING REAL PATIENT DATA")
 print("=" * 65)
 
-features_df = pd.read_csv('\\Users\\maisa\\OneDrive\\Desktop\\CSL\\Project\\ML new test\\features_0.csv')
-probe_ids   = [features_df.columns[0]] + list(features_df.iloc[:, 0])
+# replace the file path to your own .csv file destination
+data = pd.read_csv('C:/Users/maisa/OneDrive/Desktop/CSL/Project/97717_102776_103541_105147_106387/data/Original Patients Dataset_39.csv', header=0)
+y = data['label'].values
 
-data = pd.read_csv('\\Users\\maisa\\OneDrive\\Desktop\\CSL\\Project\\ML new test\\data_0.csv', header=0)
-data.columns = probe_ids
+labels_df = pd.DataFrame(y, columns=['label'])
 
-labels_df = pd.read_csv('\\Users\\maisa\\OneDrive\\Desktop\\CSL\\Project\\ML new test\\labels.csv', header=0)
-y = labels_df.iloc[:, 0].values  # 1=Responder, 0=Non-Responder
-
-FIVE_GENES = {
-    'CCDC113':       'ILMN_1775520',
-    'SLC26A8':       'ILMN_1893728',
-    'PPP1R3D':       'ILMN_1757262',
-    'LOC100131780':  'ILMN_1680347',
-    'CLEC4C':        'ILMN_3306019',
-}
-
-X = data[[probe for probe in FIVE_GENES.values()]].values
-gene_names = list(FIVE_GENES.keys())
+FIVE_GENES = ['CCDC113', 'SLC26A8', 'PPP1R3D', 'LOC100131780', 'CLEC4C']
+X = data[FIVE_GENES].values
+gene_names = FIVE_GENES
 
 scaler   = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -507,7 +498,7 @@ for name, res in all_results.items():
           f"{layer_counts[name]:>7}")
 
 best = max(all_results, key=lambda k: all_results[k]['auc'])
-print(f"\n  ✔ Best model by AUC-ROC: {best}  "
+print(f"\nBest model by AUC-ROC: {best}  "
       f"(AUC = {all_results[best]['auc']:.4f})")
 
 print(f"\n  Classification Reports:")
@@ -545,98 +536,6 @@ fig.patch.set_facecolor('#fafaf9')
 gs  = gridspec.GridSpec(3, 3, figure=fig,
                         hspace=0.45, wspace=0.35)
 
-
-# ── PANEL 1: Architecture Diagram ─────────────────────────────────────────
-ax1 = fig.add_subplot(gs[0, :])   # full top row
-ax1.set_facecolor('#f5f4f1')
-ax1.set_title('Neural Network Architectures — 2 Layer vs 5 Layer vs 7 Layer',
-              fontsize=13, fontweight='500', color='#222222', pad=10)
-ax1.axis('off')
-
-arch_configs = {
-    '2-Layer\n(Shallow)': [5, 16, 8, 1],
-    '5-Layer\n(Medium)':  [5, 32, 64, 32, 16, 8, 1],
-    '7-Layer\n(Deep)':    [5, 32, 64, 128, 64, 32, 16, 8, 1],
-}
-
-x_starts  = [0.04, 0.37, 0.67]
-net_colors = ['#2255aa', '#1D9E75', '#D85A30']
-
-for net_idx, (net_name, layers) in enumerate(arch_configs.items()):
-    x_base  = x_starts[net_idx]
-    n_layers = len(layers)
-    spacing  = 0.27 / n_layers
-    max_n    = max(layers)
-
-    for li, n_neurons in enumerate(layers):
-        x = x_base + li * spacing
-        neuron_spacing = 0.18 / (max_n + 1)
-        y_center = 0.5
-
-        # Draw neurons
-        for ni in range(min(n_neurons, 6)):    # show max 6 neurons
-            y = y_center + (ni - min(n_neurons, 6) / 2) * neuron_spacing
-            circle = plt.Circle(
-                (x, y), 0.012,
-                color=net_colors[net_idx], alpha=0.8,
-                transform=ax1.transAxes, zorder=3
-            )
-            ax1.add_patch(circle)
-
-        # "..." if more than 6 neurons
-        if n_neurons > 6:
-            ax1.text(x, y_center - 0.09, '⋮',
-                     transform=ax1.transAxes, ha='center',
-                     fontsize=14, color=net_colors[net_idx], alpha=0.7)
-
-        # Layer label below
-        layer_label = (
-            f'Input\n({n_neurons})' if li == 0 else
-            f'Output\n({n_neurons})' if li == n_layers - 1 else
-            f'H{li}\n({n_neurons})'
-        )
-        ax1.text(x, 0.16, layer_label,
-                 transform=ax1.transAxes, ha='center',
-                 fontsize=7, color='#555555')
-
-        # Draw connections to next layer
-        if li < n_layers - 1:
-            x_next = x_base + (li + 1) * spacing
-            n_next = layers[li + 1]
-            for ni in range(min(n_neurons, 6)):
-                y1 = y_center + (ni - min(n_neurons,6)/2) * neuron_spacing
-                for nj in range(min(n_next, 6)):
-                    y2 = y_center + (nj - min(n_next,6)/2) * neuron_spacing
-                    ax1.plot([x, x_next], [y1, y2],
-                             transform=ax1.transAxes,
-                             color=net_colors[net_idx],
-                             alpha=0.08, linewidth=0.5, zorder=1)
-
-    # Network title
-    ax1.text(x_base + (n_layers - 1) * spacing / 2,
-             0.93, net_name,
-             transform=ax1.transAxes, ha='center',
-             fontsize=11, fontweight='600',
-             color=net_colors[net_idx])
-
-    # Parameter count
-    m = list(model_configs.values())[net_idx]()
-    n_params = sum(p.numel() for p in m.parameters() if p.requires_grad)
-    ax1.text(x_base + (n_layers - 1) * spacing / 2,
-             0.05, f'{n_params:,} parameters',
-             transform=ax1.transAxes, ha='center',
-             fontsize=8, color='#888888', style='italic')
-
-# Divider lines between networks
-for xd in [0.345, 0.655]:
-    ax1.axvline(xd, color='#dddddd', linewidth=1, linestyle='--')
-
-# Common labels
-ax1.text(0.01, 0.5, 'Each node = neuron\nLines = weights',
-         transform=ax1.transAxes, fontsize=8, color='#888888',
-         va='center', style='italic')
-
-
 # ── PANEL 2: Training Loss Curves ─────────────────────────────────────────
 ax2 = fig.add_subplot(gs[1, 0])
 ax2.set_facecolor('#f5f4f1')
@@ -672,14 +571,14 @@ ax3.set_facecolor('#f5f4f1')
 ax3.set_title('P(Responder) per Patient\n(cross-validated predictions)',
               fontsize=11, fontweight='500', color='#222222', pad=8)
 
-x_pos = np.arange(len(y_labels := labels_df.iloc[:, 0].values))
+x_pos = np.arange(len (y_labels := labels_df.iloc[:, 0].values))
 width = 0.25
 offsets = [-width, 0, width]
 
 for idx, (name, color) in enumerate(COLORS.items()):
     probs = all_results[name]['probs']
     sort_idx = np.argsort(probs)
-    bar_colors = [COLOR_RESP if y_labels[i]==1 else COLOR_NONRESP
+    bar_colors = [COLOR_RESP if y[i]==1 else COLOR_NONRESP
                   for i in sort_idx]
     ax3.bar(x_pos + offsets[idx], probs[sort_idx],
             width=width, color=bar_colors, alpha=0.55,
