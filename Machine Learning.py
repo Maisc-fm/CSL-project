@@ -1,6 +1,6 @@
 """
 =============================================================================
-  LINEAR vs LOGISTIC REGRESSION
+ LOGISTIC REGRESSION
   Applied to Real Omalizumab Patient Data (39 patients, 5 genes)
   Lopez-Rincon et al. (2021/2023)
 =============================================================================
